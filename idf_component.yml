@@ -1,0 +1,14 @@
+version: 1.0.0
+description: MPU6050 Driver by TNY Robotics
+url: https://github.com/TNY-Robotics/mpu6050
+repository: https://github.com/TNY-Robotics/mpu6050
+issues: https://github.com/TNY-Robotics/mpu6050
+maintainers:
+  - "TNY Robotics <contact@furwaz.com>"
+tags:
+  - mpu6050
+  - mpu
+  - imu
+  - i2c
+  - driver
+  - esp-idf
