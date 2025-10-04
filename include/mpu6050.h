@@ -176,10 +176,10 @@ esp_err_t mpu6050_sleep(mpu6050_handle_t mpu_handle);
  * @brief Get raw accelerometer values from the MPU6050.
  * 
  * @param mpu_handle MPU6050 device handle.
- * @param raw_acce_value Pointer to store raw accelerometer values.
+ * @param raw_accel_value Pointer to store raw accelerometer values.
  * @return ESP_OK on success, or an error code on failure.
  */
-esp_err_t mpu6050_get_raw_accel(mpu6050_handle_t mpu_handle, mpu6050_raw_acce_value_t *const raw_acce_value);
+esp_err_t mpu6050_get_raw_accel(mpu6050_handle_t mpu_handle, mpu6050_raw_accel_value_t *const raw_accel_value);
 
 /**
  * @brief Get raw gyroscope values from the MPU6050.
@@ -194,10 +194,10 @@ esp_err_t mpu6050_get_raw_gyro(mpu6050_handle_t mpu_handle, mpu6050_raw_gyro_val
  * @brief Get accelerometer values in g from the MPU6050.
  * 
  * @param mpu_handle MPU6050 device handle.
- * @param acce_value Pointer to store accelerometer values in g.
+ * @param accel_value Pointer to store accelerometer values in g.
  * @return ESP_OK on success, or an error code on failure.
  */
-esp_err_t mpu6050_get_accel(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *const acce_value);
+esp_err_t mpu6050_get_accel(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *const accel_value);
 
 /**
  * @brief Get gyroscope values in degrees per second from the MPU6050.
