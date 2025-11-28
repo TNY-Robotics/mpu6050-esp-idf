@@ -55,10 +55,10 @@ static float mpu6050_accel_sensitivity(uint8_t accel_fs)
 {
     switch (accel_fs)
     {
-        case accel_FS_2G:  return 16384;
-        case accel_FS_4G:  return 8192;
-        case accel_FS_8G:  return 4096;
-        case accel_FS_16G: return 2048;
+        case ACCEL_FS_2G:  return 16384;
+        case ACCEL_FS_4G:  return 8192;
+        case ACCEL_FS_8G:  return 4096;
+        case ACCEL_FS_16G: return 2048;
         default: break;
     }
     return 0.0f;
@@ -139,7 +139,7 @@ esp_err_t mpu6050_wake_up(mpu6050_handle_t mpu_handle)
     return ret;
 }
 
-esp_err_t mpu6050_sleep(mpu6050_handle_t mpu_handle-esp-idf)
+esp_err_t mpu6050_sleep(mpu6050_handle_t mpu_handle)
 {
     esp_err_t ret;
     uint8_t tmp;
