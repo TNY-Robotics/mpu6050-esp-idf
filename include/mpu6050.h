@@ -34,14 +34,6 @@ extern "C" {
 
 #define MPU6050_DEFAULT_ADDR 0x68
 #define MPU6050_DEFAULT_CLOCK 100000
-#define MPU6050_DEFAULT_INFO() {\
-    .address = MPU6050_DEFAULT_ADDR,\
-    .clock_speed = MPU6050_DEFAULT_CLOCK\
-}
-#define MPU6050_DEFAULT_CONFIG() {\
-    .accel_fs = ACCEL_FS_4G,\
-    .gyro_fs = GYRO_FS_500DPS\
-}
 
 /**
  * @brief MPU6050 accelerometer full-scale range options.
@@ -77,7 +69,23 @@ typedef struct {
 typedef struct {
     mpu6050_accel_fs_t accel_fs; /*!< Accelerometer full-scale range */
     mpu6050_gyro_fs_t gyro_fs; /*!< Gyroscope full-scale range */
+    bool wake_auto; /*!< Whether to automatically wake up the device after config */
 } mpu6050_config_t;
+
+#ifdef __cplusplus
+#define MPU6050_DEFAULT_INFO() {MPU6050_DEFAULT_ADDR, MPU6050_DEFAULT_CLOCK}
+#define MPU6050_DEFAULT_CONFIG() {ACCEL_FS_4G, GYRO_FS_500DPS, true}
+#else
+#define MPU6050_DEFAULT_INFO() ((mpu6050_info_t){\
+    .address = MPU6050_DEFAULT_ADDR,\
+    .clock_speed = MPU6050_DEFAULT_CLOCK\
+})
+#define MPU6050_DEFAULT_CONFIG() ((mpu6050_config_t){\
+    .accel_fs = ACCEL_FS_4G,\
+    .gyro_fs = GYRO_FS_500DPS,\
+    .wake_auto = true\
+})
+#endif
 
 /**
  * @brief MPU6050 raw accelerometer values.

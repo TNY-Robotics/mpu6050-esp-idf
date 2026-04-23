@@ -46,4 +46,35 @@ void app_main(void)
     // Create the i2c bus handle
     i2c_master_bus_handle_t i2c_bus_handle = NULL;
     ESP_ERROR_CHECK(i2c_new_master_bus(&bus_config, &i2c_bus_handle));
+
+    // Create the mpu6050 device handle
+    mpu6050_handle_t mpu_handle;
+    ESP_ERROR_CHECK(mpu6050_create(i2c_bus_handle, MPU6050_DEFAULT_INFO(), &mpu_handle));
+
+    // Configure the mpu6050 with default settings
+    ESP_ERROR_CHECK(mpu6050_config(mpu_handle, MPU6050_DEFAULT_CONFIG()));
+
+    // NOTE : If wake_auto is disabled in the config, use mpu6050_wake_up() to wake up the device from sleep mode before reading values.
+
+    // Get the accelerometer, gyroscope and temperature values
+    while (true)
+    {
+        mpu6050_accel_value_t raw_accel;
+        mpu6050_gyro_value_t raw_gyro;
+        mpu6050_temp_value_t temp;
+
+        ESP_ERROR_CHECK(mpu6050_get_accel(mpu_handle, &raw_accel));
+        ESP_ERROR_CHECK(mpu6050_get_gyro(mpu_handle, &raw_gyro));
+        ESP_ERROR_CHECK(mpu6050_get_temp(mpu_handle, &temp));
+
+        // Print the values to the console
+        printf("Accelerometer: X = %.2f g, Y = %.2f g, Z = %.2f g\n", raw_accel.accel_x, raw_accel.accel_y, raw_accel.accel_z);
+        printf("Gyroscope: X = %.2f dps, Y = %.2f dps, Z = %.2f dps\n", raw_gyro.gyro_x, raw_gyro.gyro_y, raw_gyro.gyro_z);
+        printf("Temperature: %.2f °C\n", temp.temp);
+
+        vTaskDelay(pdMS_TO_TICKS(1000)); // wait a bit to avoid spamming the console with values
+    }
+
+    // Delete the mpu6050 device handle
+    ESP_ERROR_CHECK(mpu6050_delete(mpu_handle));
 }

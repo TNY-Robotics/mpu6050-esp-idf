@@ -116,7 +116,14 @@ esp_err_t mpu6050_create(i2c_master_bus_handle_t i2c_bus_handle, mpu6050_info_t 
 esp_err_t mpu6050_config(mpu6050_handle_t mpu_handle, mpu6050_config_t config)
 {
     uint8_t config_regs[2] = {config.gyro_fs << 3,  config.accel_fs << 3};
-    return mpu6050_write(mpu_handle, MPU6050_GYRO_CONFIG, config_regs, sizeof(config_regs));
+    esp_err_t ret = mpu6050_write(mpu_handle, MPU6050_GYRO_CONFIG, &config_regs[0], 1);
+    if (ret != ESP_OK) {
+        return ret;
+    }
+    if (config.wake_auto) {
+        return mpu6050_wake_up(mpu_handle);
+    }
+    return ESP_OK;
 }
 
 esp_err_t mpu6050_reset(mpu6050_handle_t mpu_handle)
