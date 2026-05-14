@@ -64,16 +64,16 @@ static float mpu6050_accel_sensitivity(uint8_t accel_fs)
     return 0.0f;
 }
 
-static esp_err_t mpu6050_get_accel_sensitivity(mpu6050_handle_t sensor, float *const accel_sensitivity)
-{
-    esp_err_t ret;
-    uint8_t accel_fs;
-    ret = mpu6050_read(sensor, MPU6050_ACCEL_CONFIG, &accel_fs, 1);
-    accel_fs = (accel_fs >> 3) & 0x03;
+// static esp_err_t mpu6050_get_accel_sensitivity(mpu6050_handle_t sensor, float *const accel_sensitivity)
+// {
+//     esp_err_t ret;
+//     uint8_t accel_fs;
+//     ret = mpu6050_read(sensor, MPU6050_ACCEL_CONFIG, &accel_fs, 1);
+//     accel_fs = (accel_fs >> 3) & 0x03;
 
-    *accel_sensitivity = mpu6050_accel_sensitivity(accel_fs);
-    return ret;
-}
+//     *accel_sensitivity = mpu6050_accel_sensitivity(accel_fs);
+//     return ret;
+// }
 
 static float mpu6050_gyro_sensitivity(uint8_t gyro_fs)
 {
@@ -88,16 +88,16 @@ static float mpu6050_gyro_sensitivity(uint8_t gyro_fs)
     return 0.0f;
 }
 
-static esp_err_t mpu6050_get_gyro_sensitivity(mpu6050_handle_t sensor, float *const gyro_sensitivity)
-{
-    esp_err_t ret;
-    uint8_t gyro_fs;
-    ret = mpu6050_read(sensor, MPU6050_GYRO_CONFIG, &gyro_fs, 1);
-    gyro_fs = (gyro_fs >> 3) & 0x03;
+// static esp_err_t mpu6050_get_gyro_sensitivity(mpu6050_handle_t sensor, float *const gyro_sensitivity)
+// {
+//     esp_err_t ret;
+//     uint8_t gyro_fs;
+//     ret = mpu6050_read(sensor, MPU6050_GYRO_CONFIG, &gyro_fs, 1);
+//     gyro_fs = (gyro_fs >> 3) & 0x03;
 
-    *gyro_sensitivity = mpu6050_gyro_sensitivity(gyro_fs);
-    return ret;
-}
+//     *gyro_sensitivity = mpu6050_gyro_sensitivity(gyro_fs);
+//     return ret;
+// }
 
 esp_err_t mpu6050_create(i2c_master_bus_handle_t i2c_bus_handle, mpu6050_info_t info, mpu6050_handle_t* out_mpu_handle)
 {
@@ -113,15 +113,18 @@ esp_err_t mpu6050_create(i2c_master_bus_handle_t i2c_bus_handle, mpu6050_info_t 
     return i2c_master_bus_add_device(i2c_bus_handle, &dev_cfg, &out_mpu_handle->dev_handle);
 }
 
-esp_err_t mpu6050_config(mpu6050_handle_t mpu_handle, mpu6050_config_t config)
+esp_err_t mpu6050_config(mpu6050_handle_t* mpu_handle, mpu6050_config_t config)
 {
     uint8_t config_regs[2] = {config.gyro_fs << 3,  config.accel_fs << 3};
-    esp_err_t ret = mpu6050_write(mpu_handle, MPU6050_GYRO_CONFIG, &config_regs[0], 1);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    if (config.wake_auto) {
-        return mpu6050_wake_up(mpu_handle);
+    esp_err_t ret = mpu6050_write(*mpu_handle, MPU6050_GYRO_CONFIG, &config_regs[0], 2);
+    if (ret != ESP_OK) return ret;
+
+    mpu_handle->accel_sensitivity = mpu6050_accel_sensitivity(config.accel_fs);
+    mpu_handle->gyro_sensitivity = mpu6050_gyro_sensitivity(config.gyro_fs);
+
+    if (config.wake_auto)
+    {
+        return mpu6050_wake_up(*mpu_handle);
     }
     return ESP_OK;
 }
@@ -134,29 +137,21 @@ esp_err_t mpu6050_reset(mpu6050_handle_t mpu_handle)
 
 esp_err_t mpu6050_wake_up(mpu6050_handle_t mpu_handle)
 {
-    esp_err_t ret;
     uint8_t tmp;
-    ret = mpu6050_read(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
-    if (ESP_OK != ret) {
-        return ret;
-    }
+    esp_err_t ret = mpu6050_read(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
+    if (ESP_OK != ret) return ret;
 
     tmp &= (~BIT6);
-    ret = mpu6050_write(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
-    return ret;
+    return mpu6050_write(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
 }
 
 esp_err_t mpu6050_sleep(mpu6050_handle_t mpu_handle)
 {
-    esp_err_t ret;
     uint8_t tmp;
-    ret = mpu6050_read(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
-    if (ESP_OK != ret) {
-        return ret;
-    }
+    esp_err_t ret = mpu6050_read(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
+    if (ESP_OK != ret) return ret;
     tmp |= BIT6;
-    ret = mpu6050_write(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
-    return ret;
+    return mpu6050_write(mpu_handle, MPU6050_PWR_MGMT_1, &tmp, 1);
 }
 
 esp_err_t mpu6050_get_raw_accel(mpu6050_handle_t mpu_handle, mpu6050_raw_accel_value_t *const raw_accel_value)
@@ -182,45 +177,80 @@ esp_err_t mpu6050_get_raw_gyro(mpu6050_handle_t mpu_handle, mpu6050_raw_gyro_val
     return ret;
 }
 
+esp_err_t mpu6050_get_raw_all(mpu6050_handle_t mpu_handle, mpu6050_raw_accel_value_t *raw_accel, mpu6050_raw_gyro_value_t *raw_gyro, mpu6050_temp_value_t *temp)
+{
+    uint8_t data_rd[14];
+    esp_err_t ret = mpu6050_read(mpu_handle, MPU6050_ACCEL_XOUT_H, data_rd, sizeof(data_rd));
+    
+    if (ret != ESP_OK) return ret;
+
+    if (raw_accel)
+    {
+        raw_accel->raw_accel_x = (int16_t)((data_rd[0] << 8) | data_rd[1]);
+        raw_accel->raw_accel_y = (int16_t)((data_rd[2] << 8) | data_rd[3]);
+        raw_accel->raw_accel_z = (int16_t)((data_rd[4] << 8) | data_rd[5]);
+    }
+    
+    if (temp)
+    {
+        temp->temp = (int16_t)((data_rd[6] << 8) | data_rd[7]) / 340.00f + 36.53f;
+    }
+    
+    if (raw_gyro)
+    {
+        raw_gyro->raw_gyro_x = (int16_t)((data_rd[8] << 8) | data_rd[9]);
+        raw_gyro->raw_gyro_y = (int16_t)((data_rd[10] << 8) | data_rd[11]);
+        raw_gyro->raw_gyro_z = (int16_t)((data_rd[12] << 8) | data_rd[13]);
+    }
+
+    return ESP_OK;
+}
+
 esp_err_t mpu6050_get_accel(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *const accel_value)
 {
-    esp_err_t ret;
-    float accel_sensitivity;
-    mpu6050_raw_accel_value_t raw_acce;
+    mpu6050_raw_accel_value_t raw_accel;
+    esp_err_t ret = mpu6050_get_raw_accel(mpu_handle, &raw_accel);
+    if (ret != ESP_OK) return ret;
 
-    ret = mpu6050_get_accel_sensitivity(mpu_handle, &accel_sensitivity);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    ret = mpu6050_get_raw_accel(mpu_handle, &raw_acce);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-
-    accel_value->accel_x = raw_acce.raw_accel_x / accel_sensitivity;
-    accel_value->accel_y = raw_acce.raw_accel_y / accel_sensitivity;
-    accel_value->accel_z = raw_acce.raw_accel_z / accel_sensitivity;
+    accel_value->accel_x = raw_accel.raw_accel_x / mpu_handle.accel_sensitivity;
+    accel_value->accel_y = raw_accel.raw_accel_y / mpu_handle.accel_sensitivity;
+    accel_value->accel_z = raw_accel.raw_accel_z / mpu_handle.accel_sensitivity;
     return ESP_OK;
 }
 
 esp_err_t mpu6050_get_gyro(mpu6050_handle_t mpu_handle, mpu6050_gyro_value_t *const gyro_value)
 {
-    esp_err_t ret;
-    float gyro_sensitivity;
     mpu6050_raw_gyro_value_t raw_gyro;
+    esp_err_t ret = mpu6050_get_raw_gyro(mpu_handle, &raw_gyro);
+    if (ret != ESP_OK) return ret;
 
-    ret = mpu6050_get_gyro_sensitivity(mpu_handle, &gyro_sensitivity);
-    if (ret != ESP_OK) {
-        return ret;
-    }
-    ret = mpu6050_get_raw_gyro(mpu_handle, &raw_gyro);
-    if (ret != ESP_OK) {
-        return ret;
+    gyro_value->gyro_x = raw_gyro.raw_gyro_x / mpu_handle.gyro_sensitivity;
+    gyro_value->gyro_y = raw_gyro.raw_gyro_y / mpu_handle.gyro_sensitivity;
+    gyro_value->gyro_z = raw_gyro.raw_gyro_z / mpu_handle.gyro_sensitivity;
+    return ESP_OK;
+}
+
+esp_err_t mpu6050_get_all(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *accel_value, mpu6050_gyro_value_t *gyro_value, mpu6050_temp_value_t *temp)
+{
+    mpu6050_raw_accel_value_t raw_accel;
+    mpu6050_raw_gyro_value_t raw_gyro;
+    esp_err_t ret = mpu6050_get_raw_all(mpu_handle, &raw_accel, &raw_gyro, temp);
+    if (ret != ESP_OK) return ret;
+
+    if (accel_value)
+    {
+        accel_value->accel_x = raw_accel.raw_accel_x / mpu_handle.accel_sensitivity;
+        accel_value->accel_y = raw_accel.raw_accel_y / mpu_handle.accel_sensitivity;
+        accel_value->accel_z = raw_accel.raw_accel_z / mpu_handle.accel_sensitivity;
     }
 
-    gyro_value->gyro_x = raw_gyro.raw_gyro_x / gyro_sensitivity;
-    gyro_value->gyro_y = raw_gyro.raw_gyro_y / gyro_sensitivity;
-    gyro_value->gyro_z = raw_gyro.raw_gyro_z / gyro_sensitivity;
+    if (gyro_value)
+    {
+        gyro_value->gyro_x = raw_gyro.raw_gyro_x / mpu_handle.gyro_sensitivity;
+        gyro_value->gyro_y = raw_gyro.raw_gyro_y / mpu_handle.gyro_sensitivity;
+        gyro_value->gyro_z = raw_gyro.raw_gyro_z / mpu_handle.gyro_sensitivity;
+    }
+    
     return ESP_OK;
 }
 

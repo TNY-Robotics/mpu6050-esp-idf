@@ -135,6 +135,8 @@ typedef struct {
  */
 typedef struct {
     i2c_master_dev_handle_t dev_handle; /*!< I2C device handle for MPU6050 */
+    float accel_sensitivity; /*!< Accelerometer sensitivity based on the configured full-scale range */
+    float gyro_sensitivity; /*!< Gyroscope sensitivity based on the configured full-scale range */
 } mpu6050_handle_t;
 
 /**
@@ -150,11 +152,11 @@ esp_err_t mpu6050_create(i2c_master_bus_handle_t i2c_bus_handle, mpu6050_info_t 
 /**
  * @brief Configure the MPU6050 device.
  * 
- * @param mpu_handle MPU6050 device handle.
+ * @param mpu_handle MPU6050 device handle pointer.
  * @param config Configuration parameters for the MPU6050.
  * @return ESP_OK on success, or an error code on failure.
  */
-esp_err_t mpu6050_config(mpu6050_handle_t mpu_handle, mpu6050_config_t config);
+esp_err_t mpu6050_config(mpu6050_handle_t* mpu_handle, mpu6050_config_t config);
 
 /**
  * @brief Reset the MPU6050 device.
@@ -199,6 +201,17 @@ esp_err_t mpu6050_get_raw_accel(mpu6050_handle_t mpu_handle, mpu6050_raw_accel_v
 esp_err_t mpu6050_get_raw_gyro(mpu6050_handle_t mpu_handle, mpu6050_raw_gyro_value_t *const raw_gyro_value);
 
 /**
+ * @brief Get all raw values (Accel, Temp, Gyro) in a single I2C burst read.
+ * 
+ * @param mpu_handle MPU6050 device handle.
+ * @param raw_accel Pointer to store raw accel values (can be NULL).
+ * @param raw_gyro Pointer to store raw gyro values (can be NULL).
+ * @param temp Pointer to store raw temp value (can be NULL).
+ * @return ESP_OK on success, or an error code on failure.
+ */
+esp_err_t mpu6050_get_raw_all(mpu6050_handle_t mpu_handle, mpu6050_raw_accel_value_t *raw_accel, mpu6050_raw_gyro_value_t *raw_gyro, mpu6050_temp_value_t *temp);
+
+/**
  * @brief Get accelerometer values in g from the MPU6050.
  * 
  * @param mpu_handle MPU6050 device handle.
@@ -215,6 +228,17 @@ esp_err_t mpu6050_get_accel(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *
  * @return ESP_OK on success, or an error code on failure.
  */
 esp_err_t mpu6050_get_gyro(mpu6050_handle_t mpu_handle, mpu6050_gyro_value_t *const gyro_value);
+
+/**
+ * @brief Get all sensor values (Accel in g, Gyro in dps, Temp in C) from the MPU6050.
+ * 
+ * @param mpu_handle MPU6050 device handle.
+ * @param accel_value Pointer to store accelerometer values in g (can be NULL).
+ * @param gyro_value Pointer to store gyroscope values in degrees per second (can be NULL).
+ * @param temp Pointer to store temperature value in degrees Celsius (can be NULL).
+ * @return ESP_OK on success, or an error code on failure.
+ */
+esp_err_t mpu6050_get_all(mpu6050_handle_t mpu_handle, mpu6050_accel_value_t *accel_value, mpu6050_gyro_value_t *gyro_value, mpu6050_temp_value_t *temp);
 
 /**
  * @brief Get the temperature value in degrees Celsius from the MPU6050.
